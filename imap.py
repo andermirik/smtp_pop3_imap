@@ -51,7 +51,28 @@ for num in data[0].split() :
     print('Тема:', decode(email_message['Subject']))
     print('Кому: ', decode(email_message['To']))
     print('Отправитель: ', decode(email_message['From']))
-    print(email_message.get_payload())
+
+    for part in email_message.walk():
+        if part.get_content_type() == 'text/plain':
+            print("Сообщение: ", decode(part.get_payload()))
+            continue
+        if part.get_content_type() == 'text/html':
+            print("Сообщение: ", decode(part.get_payload()))
+            continue
+        if part.get_content_maintype() == 'multipart':
+            continue
+        if part.get('Content-Disposition') is None:
+            continue
+        fileName = part.get_filename()
+        if bool(fileName):
+            filePath = os.path.join('save', fileName)
+            if not os.path.isfile(filePath) :
+                fp = open(filePath, 'wb')
+                print('Saving: ', filePath)
+                fp.write(part.get_payload(decode=True))
+                fp.close()
+            else:
+                print('File already saved: ', filePath)
 
 
 server.close()

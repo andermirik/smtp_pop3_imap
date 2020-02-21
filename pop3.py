@@ -52,7 +52,7 @@ for i in range(numMessages):
     sUB = parsed_email['Subject']
 
     print ("Тема: ", decode(sUB))
-    print ("Кому: " + parsed_email['To'])
+    print ("Кому: " + decode(parsed_email['To']))
     f = re.findall(r'[\w\.-]+@[\w\.-]+', (parsed_email['From']))
     #You can print other parameters as weel. Such as attachement, if yes, then you can download the attachment.
     print ("От кого: ", f[0])
@@ -63,6 +63,26 @@ for i in range(numMessages):
 
     resp, lines, octets  = server.retr(i+1)
 
-    print("Сообщение: ", decode(parsed_email.get_payload()))
+    for part in parsed_email.walk():
+        if part.get_content_type() == 'text/plain':
+            print("Сообщение: ", decode(part.get_payload()))
+            continue
+        if part.get_content_type() == 'text/html':
+            print("Сообщение: ", decode(part.get_payload()))
+            continue
+        if part.get_content_maintype() == 'multipart':
+            continue
+        if part.get('Content-Disposition') is None:
+            continue
+        fileName = part.get_filename()
+        if bool(fileName):
+            filePath = os.path.join('save', fileName)
+            if not os.path.isfile(filePath) :
+                fp = open(filePath, 'wb')
+                print('Saving: ', filePath)
+                fp.write(part.get_payload(decode=True))
+                fp.close()
+            else:
+                print('File already saved: ', filePath)
 
 server.quit()
